@@ -470,6 +470,7 @@
     <div class="header-status">
       <div class="sync-dot" id="syncDot"></div>
       <span id="syncLabel">Connexion...</span>
+      <button onclick="exportWord()" style="margin-left:12px;padding:7px 16px;background:#1B5FA8;color:white;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;">⬇ Exporter Word</button>
     </div>
   </div>
 </header>
@@ -998,6 +999,61 @@ function showToast(msg, type = 'info') {
   t.innerHTML = `<span>${icons[type]||'•'}</span> ${msg}`;
   c.appendChild(t);
   setTimeout(() => t.remove(), 3500);
+}
+
+// ── Export Word
+function exportWord() {
+  const date = new Date().toLocaleDateString('fr-FR');
+  const listNames = {
+    l1: 'Absents des listes',
+    l2: 'INE incorrects',
+    l3: 'Noms erronés',
+    l4: 'Doublons'
+  };
+
+  let html = `
+    <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+    <head><meta charset="utf-8"><title>Listes UJKZ Médecine</title>
+    <style>
+      body { font-family: Calibri, sans-serif; font-size: 11pt; margin: 2cm; }
+      h1 { font-size: 16pt; color: #0B1F3A; text-align: center; border-bottom: 2pt solid #0B1F3A; padding-bottom: 6pt; }
+      h2 { font-size: 13pt; color: #1B5FA8; margin-top: 18pt; border-left: 4pt solid #1B5FA8; padding-left: 8pt; }
+      .meta { text-align: center; color: #666; font-size: 10pt; margin-bottom: 16pt; }
+      table { width: 100%; border-collapse: collapse; margin-top: 8pt; }
+      th { background: #0B1F3A; color: white; padding: 6pt 8pt; text-align: left; font-size: 10pt; }
+      td { padding: 5pt 8pt; border-bottom: 1pt solid #E0E0E0; font-size: 10pt; vertical-align: top; }
+      tr:nth-child(even) td { background: #F5F6F8; }
+      .total { font-size: 10pt; color: #666; margin-top: 4pt; margin-bottom: 12pt; }
+    </style></head><body>
+    <h1>Grand Groupe Médecine — Listes Récapitulatives</h1>
+    <p class="meta">Université Joseph Ki-Zerbo (UJKZ) &nbsp;|&nbsp; Exporté le ${date}</p>
+  `;
+
+  ['l1','l2','l3','l4'].forEach(listId => {
+    const entries = Object.values(appData[listId] || {});
+    html += `<h2>${listNames[listId]}</h2>`;
+    html += `<p class="total">${entries.length} entrée(s)</p>`;
+    if (entries.length === 0) {
+      html += `<p style="color:#999;font-style:italic;">Aucune entrée.</p>`;
+    } else {
+      html += `<table><tr><th>#</th><th>Informations</th></tr>`;
+      entries.forEach((e, i) => {
+        html += `<tr><td>${i+1}</td><td>${e.text || ''}</td></tr>`;
+      });
+      html += `</table>`;
+    }
+  });
+
+  html += `</body></html>`;
+
+  const blob = new Blob(['\ufeff' + html], { type: 'application/msword' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Listes_UJKZ_Medecine_${date.replace(/\//g,'-')}.doc`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Export Word téléchargé ✓', 'success');
 }
 
 // ── Boot
