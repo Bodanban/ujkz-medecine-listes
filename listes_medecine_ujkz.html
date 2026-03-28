@@ -662,16 +662,9 @@ function setupRealtimeListeners() {
   db.ref('listes_ujkz').on('value', snapshot => {
     const data = snapshot.val();
 
-    if (!data || Object.values(data).every(v => !v || Object.keys(v).length === 0)) {
-      // Seed initial data
-      const seed = {};
-      Object.keys(INITIAL_DATA).forEach(listId => {
-        seed[listId] = {};
-        INITIAL_DATA[listId].forEach((text, i) => {
-          seed[listId]['entry_' + (i + 1)] = { text, ts: Date.now() };
-        });
-      });
-      db.ref('listes_ujkz').set(seed);
+    if (!data) {
+      document.getElementById('loadingScreen').style.display = 'none';
+      renderAll();
       return;
     }
 
